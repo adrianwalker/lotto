@@ -31,7 +31,7 @@ public final class Lotto {
 
     // lotto entries, could be read from a database or file?
     int[][] entries = new int[ENTRIES_SIZE][ENTRY_BALLS_SIZE];
-
+    
     // draw balls for random entries
     int[] balls = {
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -66,21 +66,18 @@ public final class Lotto {
 
     // iterate over main ball combinations
     int[] mainBalls = new int[MAIN_BALLS_SIZE];
-    for (mainBalls[0] = LOW_BALL; mainBalls[0] <= HIGH_BALL; mainBalls[0]++) {
-      for (mainBalls[1] = mainBalls[0] + 1; mainBalls[1] <= HIGH_BALL; mainBalls[1]++) {
-        for (mainBalls[2] = mainBalls[1] + 1; mainBalls[2] <= HIGH_BALL; mainBalls[2]++) {
-          for (mainBalls[3] = mainBalls[2] + 1; mainBalls[3] <= HIGH_BALL; mainBalls[3]++) {
-            for (mainBalls[4] = mainBalls[3] + 1; mainBalls[4] <= HIGH_BALL; mainBalls[4]++) {
-              for (mainBalls[5] = mainBalls[4] + 1; mainBalls[5] <= HIGH_BALL; mainBalls[5]++) {
+    for (mainBalls[0] = LOW_BALL; mainBalls[0] <= HIGH_BALL - 6; mainBalls[0]++) {
+      for (mainBalls[1] = mainBalls[0] + 1; mainBalls[1] <= HIGH_BALL - 5; mainBalls[1]++) {
+        for (mainBalls[2] = mainBalls[1] + 1; mainBalls[2] <= HIGH_BALL - 4; mainBalls[2]++) {
+          for (mainBalls[3] = mainBalls[2] + 1; mainBalls[3] <= HIGH_BALL - 3; mainBalls[3]++) {
+            for (mainBalls[4] = mainBalls[3] + 1; mainBalls[4] <= HIGH_BALL - 2; mainBalls[4]++) {
+              for (mainBalls[5] = mainBalls[4] + 1; mainBalls[5] <= HIGH_BALL - 1; mainBalls[5]++) {
 
+                // create bitmask for match lookup
                 long mainBallsBitmask = bitmask(mainBalls);
 
                 // iterate over bonus balls
-                for (int bonusBall = LOW_BALL; bonusBall <= HIGH_BALL; bonusBall++) {
-
-                  if (bitSet(mainBallsBitmask, bonusBall)) {
-                    continue;
-                  }
+                for (int bonusBall = mainBalls[5] + 1; bonusBall <= HIGH_BALL; bonusBall++) {
 
                   // init match counts to zero
                   int[] matchesCount = {0, 0, 0, 0, 0, 0, 0, 0};

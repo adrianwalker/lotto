@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 
   // lotto entries, could be read from a database or file?
   int entries[ENTRIES_SIZE][ENTRY_BALLS_SIZE];
-  
+
   // draw balls for random entries
   int balls[] = {
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
   long minCost = LONG_MAX;
   int minCostMainBalls[MAIN_BALLS_SIZE];
   int minCostBonusBall = -1;
-  
+
   // maximum values
   long maxCost = LONG_MIN;
   int maxCostMainBalls[MAIN_BALLS_SIZE];
@@ -83,19 +83,23 @@ int main(int argc, char** argv) {
 
   // iterate over main ball combinations
   int mainBalls[MAIN_BALLS_SIZE];
-  for (mainBalls[0] = LOW_BALL; mainBalls[0] <= HIGH_BALL - 6; mainBalls[0]++) {
-    for (mainBalls[1] = mainBalls[0] + 1; mainBalls[1] <= HIGH_BALL - 5; mainBalls[1]++) {
-      for (mainBalls[2] = mainBalls[1] + 1; mainBalls[2] <= HIGH_BALL - 4; mainBalls[2]++) {
-        for (mainBalls[3] = mainBalls[2] + 1; mainBalls[3] <= HIGH_BALL - 3; mainBalls[3]++) {
-          for (mainBalls[4] = mainBalls[3] + 1; mainBalls[4] <= HIGH_BALL - 2; mainBalls[4]++) {
-            for (mainBalls[5] = mainBalls[4] + 1; mainBalls[5] <= HIGH_BALL - 1; mainBalls[5]++) {
+  for (mainBalls[0] = LOW_BALL; mainBalls[0] <= HIGH_BALL; mainBalls[0]++) {
+    for (mainBalls[1] = mainBalls[0] + 1; mainBalls[1] <= HIGH_BALL; mainBalls[1]++) {
+      for (mainBalls[2] = mainBalls[1] + 1; mainBalls[2] <= HIGH_BALL; mainBalls[2]++) {
+        for (mainBalls[3] = mainBalls[2] + 1; mainBalls[3] <= HIGH_BALL; mainBalls[3]++) {
+          for (mainBalls[4] = mainBalls[3] + 1; mainBalls[4] <= HIGH_BALL; mainBalls[4]++) {
+            for (mainBalls[5] = mainBalls[4] + 1; mainBalls[5] <= HIGH_BALL; mainBalls[5]++) {
 
               // create bitmask for match lookup
               long mainBallsBitmask = bitmask(mainBalls, SIZEOF(mainBalls));
 
               // iterate over bonus balls
               int bonusBall;
-              for (bonusBall = mainBalls[5] + 1; bonusBall <= HIGH_BALL; bonusBall++) {
+              for (bonusBall = LOW_BALL; bonusBall <= HIGH_BALL; bonusBall++) {
+
+                if (bitSet(mainBallsBitmask, bonusBall)) {
+                  continue;
+                }
 
                 // init match counts to zero
                 int matchesCount[MATCHES_COUNT_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0};
