@@ -30,13 +30,13 @@
 #define MAIN_BALLS_SIZE 6
 #define ENTRY_BALLS_SIZE 6
 #define MATCHES_COUNT_SIZE 8
-#define ENTRIES_SIZE 5
+#define ENTRIES_SIZE 10
 
 void shuffle(int a[], int size);
 int bitSet(long bitMask, int i);
 long setBit(long bitmask, int i);
 long bitmask(int a[], int size);
-int matches(int entry[ENTRY_BALLS_SIZE], long mainBallsBitmask, int bonusBall);
+int matches(int entry[ENTRY_BALLS_SIZE], long mainBallsBitmask);
 long cost(int matchesCount[MATCHES_COUNT_SIZE]);
 void print(
         time_t start, time_t end,
@@ -93,39 +93,56 @@ int main(int argc, char** argv) {
               // create bitmask for match lookup
               long mainBallsBitmask = bitmask(mainBalls, SIZEOF(mainBalls));
 
-              // iterate over bonus balls
-              int bonusBall;
-              for (bonusBall = LOW_BALL; bonusBall <= HIGH_BALL; bonusBall++) {
+              // init match counts to zero
+              int matchesCount[MATCHES_COUNT_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-                if (bitSet(mainBallsBitmask, bonusBall)) {
-                  continue;
+              //init bonus ball
+              int bonusBall = -1;
+
+              // iterate over entries
+              int i;
+              for (i = 0; i < ENTRIES_SIZE; i++) {
+
+                // count matches
+                int m = matches(entries[i], mainBallsBitmask);
+
+                // if 5 matches check the bonus ball
+                if (m == MATCH_5) {
+
+                  // iterate over bonus balls
+                  for (bonusBall = LOW_BALL; bonusBall <= HIGH_BALL; bonusBall++) {
+
+                    // skip bonus ball if its in the main balls
+                    if (bitSet(mainBallsBitmask, bonusBall)) {
+                      continue;
+                    }
+
+                    long entryBitmask = bitmask(entries[i], SIZEOF(entries));
+
+                    // break if the entries contain the bonus ball
+                    if (bitSet(entryBitmask, bonusBall)) {
+                      m = MATCH_5_PLUS_BONUS;
+                      break;
+                    }
+                  }
                 }
 
-                // init match counts to zero
-                int matchesCount[MATCHES_COUNT_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0};
+                // increment matches for number of balls matched
+                matchesCount[m]++;
+              }
 
-                // iterate over entries
-                int i;
-                for (i = 0; i < ENTRIES_SIZE; i++) {
-                  // count matches
-                  int m = matches(entries[i], mainBallsBitmask, bonusBall);
-                  // increment matches for number of balls matched
-                  matchesCount[m]++;
-                }
+              // get total cost of draw
+              long c = cost(matchesCount);
 
-                // get total cost of draw
-                long c = cost(matchesCount);
-
-                // keep track of highest/lowest draw costs
-                if (c < minCost) {
-                  minCost = c;
-                  memcpy(minCostMainBalls, mainBalls, MAIN_BALLS_SIZE * sizeof (int));
-                  minCostBonusBall = bonusBall;
-                } else if (c > maxCost) {
-                  maxCost = c;
-                  memcpy(maxCostMainBalls, mainBalls, MAIN_BALLS_SIZE * sizeof (int));
-                  maxCostBonusBall = bonusBall;
-                }
+              // keep track of highest/lowest draw costs
+              if (c < minCost) {
+                minCost = c;
+                memcpy(minCostMainBalls, mainBalls, MAIN_BALLS_SIZE * sizeof (int));
+                minCostBonusBall = bonusBall;
+              } else if (c > maxCost) {
+                maxCost = c;
+                memcpy(maxCostMainBalls, mainBalls, MAIN_BALLS_SIZE * sizeof (int));
+                maxCostBonusBall = bonusBall;
               }
             }
           }
@@ -173,22 +190,16 @@ long bitmask(int a[], int size) {
   return bitmask;
 }
 
-int matches(int entry[ENTRY_BALLS_SIZE], long mainBallsBitmask, int bonusBall) {
+int matches(int entry[ENTRY_BALLS_SIZE], long mainBallsBitmask) {
 
   int matches = 0;
-  int bonusMatch = FALSE;
 
   int i;
   for (i = 0; i < ENTRY_BALLS_SIZE; i++) {
+
     if (bitSet(mainBallsBitmask, entry[i])) {
       matches++;
-    } else if (entry[i] == bonusBall) {
-      bonusMatch = TRUE;
     }
-  }
-
-  if (matches == MATCH_5 && bonusMatch) {
-    matches = MATCH_5_PLUS_BONUS;
   }
 
   return matches;
@@ -216,6 +227,9 @@ void print(
         time_t start, time_t end,
         long minCost, int minCostMainBalls[MAIN_BALLS_SIZE], int minCostBonusBall,
         long maxCost, int maxCostMainBalls[MAIN_BALLS_SIZE], int maxCostBonusBall) {
+
+  printf("\n--- entries ---\n");
+  printf("random entries processed = %d\n", ENTRIES_SIZE);
 
   printf("\n--- time ---\n");
   printf("elapsed time = %lu seconds\n", (end - start));

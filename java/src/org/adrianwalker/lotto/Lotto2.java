@@ -1,8 +1,9 @@
 package org.adrianwalker.lotto;
 
+import java.util.Arrays;
 import java.util.Random;
 
-public final class Lotto {
+public final class Lotto2 {
 
   /*
    * Estimated lotto prizes:
@@ -25,7 +26,7 @@ public final class Lotto {
   // array sizes
   private static final int MAIN_BALLS_SIZE = 6;
   private static final int ENTRY_BALLS_SIZE = 6;
-  private static final int ENTRIES_SIZE = 5;
+  private static final int ENTRIES_SIZE = 10;
 
   public static void main(final String[] args) {
 
@@ -50,6 +51,7 @@ public final class Lotto {
       entries[i][3] = balls[3];
       entries[i][4] = balls[4];
       entries[i][5] = balls[5];
+      Arrays.sort(entries[i]);
     }
 
     long start = System.currentTimeMillis();
@@ -73,39 +75,53 @@ public final class Lotto {
             for (mainBalls[4] = mainBalls[3] + 1; mainBalls[4] <= HIGH_BALL; mainBalls[4]++) {
               for (mainBalls[5] = mainBalls[4] + 1; mainBalls[5] <= HIGH_BALL; mainBalls[5]++) {
 
-                long mainBallsBitmask = bitmask(mainBalls);
+                // init match counts to zero
+                int[] matchesCount = {0, 0, 0, 0, 0, 0, 0, 0};
 
-                // iterate over bonus balls
-                for (int bonusBall = LOW_BALL; bonusBall <= HIGH_BALL; bonusBall++) {
+                // init bonus ball
+                int bonusBall = -1;
 
-                  if (bitSet(mainBallsBitmask, bonusBall)) {
-                    continue;
+                // iterate over entries
+                for (int[] entry : entries) {
+
+                  // count matches
+                  int matches = intersection(entry, mainBalls);
+
+                  // if 5 matches check the bonus ball
+                  if (matches == MATCH_5) {
+
+                    // iterate over bonus balls
+                    for (bonusBall = LOW_BALL; bonusBall <= HIGH_BALL; bonusBall++) {
+
+                      // skip bonus ball if its in the main balls
+                      if (contains(mainBalls, bonusBall)) {
+                        continue;
+                      }
+
+                      // break if the entries contain the bonus ball
+                      if (contains(entry, bonusBall)) {
+                        matches = MATCH_5_PLUS_BONUS;
+                        break;
+                      }
+                    }
                   }
 
-                  // init match counts to zero
-                  int[] matchesCount = {0, 0, 0, 0, 0, 0, 0, 0};
+                  // increment matches for number of balls matched
+                  matchesCount[matches]++;
+                }
 
-                  // iterate over entries
-                  for (int[] entry : entries) {
-                    // count matches
-                    int matches = matches(entry, mainBallsBitmask, bonusBall);
-                    // increment matches for number of balls matched
-                    matchesCount[matches]++;
-                  }
+                // get total cost of draw
+                long cost = cost(matchesCount);
 
-                  // get total cost of draw
-                  long cost = cost(matchesCount);
-
-                  // keep track of highest/lowest draw costs
-                  if (cost < minCost) {
-                    minCost = cost;
-                    minCostMainBalls = mainBalls.clone();
-                    minCostBonusBall = bonusBall;
-                  } else if (cost > maxCost) {
-                    maxCost = cost;
-                    maxCostMainBalls = mainBalls.clone();
-                    maxCostBonusBall = bonusBall;
-                  }
+                // keep track of highest/lowest draw costs
+                if (cost < minCost) {
+                  minCost = cost;
+                  minCostMainBalls = mainBalls.clone();
+                  minCostBonusBall = bonusBall;
+                } else if (cost > maxCost) {
+                  maxCost = cost;
+                  maxCostMainBalls = mainBalls.clone();
+                  maxCostBonusBall = bonusBall;
                 }
               }
             }
@@ -121,6 +137,11 @@ public final class Lotto {
             maxCost, maxCostMainBalls, maxCostBonusBall);
   }
 
+  private static boolean contains(final int[] a, final int key) {
+
+    return Arrays.binarySearch(a, key) != -1;
+  }
+
   private static void shuffle(final int[] a) {
 
     Random rand = new Random(System.currentTimeMillis());
@@ -134,44 +155,27 @@ public final class Lotto {
     }
   }
 
-  private static boolean bitSet(final long bitMask, final int i) {
-    return (bitMask & (1L << i)) > 0;
-  }
+  private static int intersection(final int[] a1, final int[] a2) {
 
-  private static long setBit(final long bitmask, final int i) {
-    return bitmask | (1L << i);
-  }
+    int count = 0;
+    int i = 0;
+    int j = 0;
+    int a1length = a1.length;
+    int a2length = a2.length;
 
-  private static long bitmask(final int[] a) {
-
-    long bitmask = 0;
-
-    for (int i : a) {
-      bitmask = setBit(bitmask, i);
-    }
-
-    return bitmask;
-  }
-
-  private static int matches(final int[] entry, final long mainBallsBitmask, final int bonusBall) {
-
-    int matches = 0;
-    boolean bonusMatch = false;
-
-    for (int number : entry) {
-
-      if (bitSet(mainBallsBitmask, number)) {
-        matches++;
-      } else if (number == bonusBall) {
-        bonusMatch = true;
+    while (i < a1length && j < a2length) {
+      if (a1[i] == a2[j]) {
+        count++;
+        i++;
+        j++;
+      } else if (a1[i] < a2[j]) {
+        i++;
+      } else if (a1[i] > a2[j]) {
+        j++;
       }
     }
 
-    if (matches == MATCH_5 && bonusMatch) {
-      matches = MATCH_5_PLUS_BONUS;
-    }
-
-    return matches;
+    return count;
   }
 
   private static long cost(final int[] matchesCount) {
@@ -197,6 +201,9 @@ public final class Lotto {
           final long minCost, final int[] minCostMainBalls, final int minCostBonusBall,
           final long maxCost, final int[] maxCostMainBalls, final int maxCostBonusBall) {
 
+    System.out.printf("\n--- entries ---\n");
+    System.out.printf("random entries processed = %s\n", ENTRIES_SIZE);
+
     System.out.printf("\n--- time ---\n");
     System.out.printf("elapsed time = %s seconds\n", (end - start) / 1000);
 
@@ -209,7 +216,8 @@ public final class Lotto {
             minCostMainBalls[3],
             minCostMainBalls[4],
             minCostMainBalls[5]);
-    System.out.printf("minimum bonus ball = %s\n", minCostBonusBall);
+    System.out.printf("minimum bonus ball = %s\n",
+            minCostBonusBall == -1 ? "any" : minCostBonusBall);
 
     System.out.printf("\n--- max ---\n");
     System.out.printf("maximum cost = %s\n", maxCost);
@@ -220,6 +228,7 @@ public final class Lotto {
             maxCostMainBalls[3],
             maxCostMainBalls[4],
             maxCostMainBalls[5]);
-    System.out.printf("maximum bonus ball = %s\n", maxCostBonusBall);
+    System.out.printf("maximum bonus ball = %s\n",
+            maxCostBonusBall == -1 ? "any" : maxCostBonusBall);
   }
 }
