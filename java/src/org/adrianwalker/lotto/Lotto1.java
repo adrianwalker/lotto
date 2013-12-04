@@ -76,10 +76,9 @@ public final class Lotto1 {
                 // iterate over bonus balls
                 for (int bonusBall = LOW_BALL; bonusBall <= HIGH_BALL; bonusBall++) {
 
-                  for (int mainBall : mainBalls) {
-                    if (mainBall == bonusBall) {
-                      continue;
-                    }
+                  // skip bonus ball if its in the main balls
+                  if (contains(mainBalls, bonusBall)) {
+                    continue;
                   }
 
                   // init match counts to zero
@@ -119,6 +118,17 @@ public final class Lotto1 {
     print(start, end,
             minCost, minCostMainBalls, minCostBonusBall,
             maxCost, maxCostMainBalls, maxCostBonusBall);
+  }
+
+  private static boolean contains(final int[] a, final int key) {
+
+    for (int x : a) {
+      if (x == key) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static void shuffle(final int[] a) {
